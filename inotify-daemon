@@ -1,7 +1,7 @@
 #! /usr/bin/env python
 # -*- coding: utf-8 -*-
 ###
-# Copyright (c) 2009 by Elián Hanisch <lambdae2@gmail.com>
+# Copyright (c) 2009-2010 by Elián Hanisch <lambdae2@gmail.com>
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -19,7 +19,7 @@
 
 __version__   = '0.1'
 __author__    = 'Elián Hanisch <lambdae2@gmail.com>'
-__copyright__ = 'Copyright (c) 2009 by Elián Hanisch <lambdae2@gmail.com>'
+__copyright__ = 'Copyright (c) 2009-2010 by Elián Hanisch <lambdae2@gmail.com>'
 
 
 import xmlrpclib, socket, os, sys, subprocess, optparse
@@ -88,7 +88,7 @@ class Notifications(object):
 
     def _timeout(self, s=None):
         if s is not None:
-            t = len(s) * 100
+            t = len(s) * 150
             if t < 5000:
                 return 5000
             elif t > 60000:
@@ -194,7 +194,6 @@ def getDBUS(testMethod):
     process_list = [ s for s in os.listdir('/proc') if s.isdigit() ]
     our_uid = os.getuid()
     dbus_invalid_address = set()
-    dbus_current_address = os.environ[dbus_env]
     dbus_address = None
     for process in process_list:
         environ = os.path.join('/proc', process, 'environ')
@@ -207,7 +206,6 @@ def getDBUS(testMethod):
                         print >>sys.stderr, 'Testing with %s ... ' %dbus_address,
                         if testMethod(dbus_address):
                             print >>sys.stderr, 'OK'
-                            os.environ[dbus_env] = dbus_current_address
                             return dbus_address
                         else:
                             print >>sys.stderr, 'Failed'
@@ -278,24 +276,6 @@ def daemonize(PIDFILE='/tmp/inotify-daemon.pid'):
         sys.exit(1)
     # Now I am a daemon!
 
-def getDefaultMethod():
-    method = None
-    # I need to do this for filter some annoying error messages when importing pynotify
-    stderr = sys.stderr
-    sys.stderr = open('/dev/null', 'w')
-    try:
-        import pynotify
-        method = 'libnotify'
-    except ImportError:
-        try:
-            import dbus
-            method = 'dbus'
-        except ImportError:
-            pass
-    # revert redirection
-    sys.stderr = stderr
-    return method
-
 if __name__ == '__main__':
     # argument parsing
     usage = 'usage: %prog [--host <hostname>] [--port <port>] [--test] [--help]'
@@ -304,6 +284,9 @@ if __name__ == '__main__':
             help='Port to listen. [Default: %default]', default=7766)
     parser.add_option('-H', '--host', dest='host',
             help='Daemon hostname. [Default: %default]', default='localhost')
+    parser.add_option('-m', '--method', dest='method',
+            help="Notification method, available: 'libnotify', 'dbus' [Default: %default]",
+            default='libnotify')
     parser.add_option('-t', '--test', dest='test', action='store_true',
             help='Send a test notification to an already running daemon and exit.',
             default=False)
@@ -311,18 +294,14 @@ if __name__ == '__main__':
 
     port = opts.port
     host = opts.host
+    method = opts.method
     
     if opts.test:
         daemon = xmlrpclib.Server('http://%s:%s' %(host, port))
         daemon.notify('This is a test')
         sys.exit(0)
 
-    method = getDefaultMethod()
-    if method is None:
-        print >>sys.stderr, \
-                'Error: No supported notification methods found.'
-    else:
-        daemonize()
-        main(host=host, port=port, method=method)
+    daemonize()
+    main(host=host, port=port, method=method)
 
 # vim:set shiftwidth=4 tabstop=4 softtabstop=4 expandtab textwidth=100:
