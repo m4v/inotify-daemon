@@ -337,7 +337,7 @@ if __name__ == '__main__':
     port = opts.port
     host = opts.host
     method = opts.method
-    passwd = opts.passwd
+    passwd = opts.passwd or ''
     
     if opts.test:
         daemon = xmlrpclib.Server('http://%s:%s' %(host, port))
