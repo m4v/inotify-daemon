@@ -33,8 +33,9 @@ class NotifyError(Exception):
 class Daemon(SimpleXMLRPCServer):
     stopped = False
     shutdown = False
-    def __init__(self, *args, **kwargs):
-        SimpleXMLRPCServer.__init__(self, *args, **kwargs)
+    def __init__(self, addr, passwd=''):
+        SimpleXMLRPCServer.__init__(self, addr)
+        self.passwd = passwd
         self.register_function(self.quit)
         self.register_function(self.restart)
         self.register_function(lambda : __version__, 'version')
@@ -45,15 +46,19 @@ class Daemon(SimpleXMLRPCServer):
             if self.shutdown:
                 self._restart_daemon()
 
-    def quit(self):
+    def quit(self, passwd=''):
         """Allows to kill the server remotelly."""
+        if self.passwd and passwd != self.passwd:
+            return 'Invalid password.'
         print >>sys.stderr, 'Stopping server.'
         self.server_close()
         self.stopped = True
         return 'OK'
 
-    def restart(self):
+    def restart(self, passwd=''):
         """Allows to restart the server remotelly."""
+        if self.passwd and passwd != self.passwd:
+            return 'Invalid password.'
         print >>sys.stderr, 'Restarting server.'
         self.force_restart()
         return 'OK'
@@ -71,14 +76,19 @@ class Daemon(SimpleXMLRPCServer):
 
 dbus_env = 'DBUS_SESSION_BUS_ADDRESS'
 class Notifications(object):
-    def __init__(self, method):
+    def __init__(self, method, passwd=''):
         self.method = method
+        self.passwd = passwd
 
     def _dispatch(self, method, args):
+        passwd = args[0]
+        if self.passwd and passwd != self.passwd:
+            return 'Invalid password.'
         if method in ('any', 'notify'):
             method = self.method
         if not hasattr(self, method):
             return 'Invalid notification method.'
+        args = args[1:]
         return getattr(self, method)(*args)
 
     def _timeout(self, s=None):
@@ -211,28 +221,28 @@ def getDBUS(testMethod):
     raise NotifyError, 'No dbus address found.'
 
 
-def main(host='localhost', port=7766, method=None):
+def main(host='localhost', port=7766, method=None, passwd=''):
     """
     Main daemon loop."""
     global server
 
     try:
-        server = Daemon((host, port))
+        server = Daemon((host, port), passwd=passwd)
     except socket.error, e:
         # another server is running? lets try to kill it
         try:
             daemon = xmlrpclib.Server('http://%s:%s' %(host, port))
-            rt = daemon.quit()
+            rt = daemon.quit(passwd)
             if rt == 'OK':
                 print 'Current daemon closed.'
-                server = Daemon((host, port))
+                server = Daemon((host, port), passwd=passwd)
             else:
-                raise Exception
-        except:
+                raise Exception(rt)
+        except Exception, e:
             print >>sys.stderr, 'Failed to start daemon: %s' %e
             return
     print 'Running notification daemon...'
-    server.register_instance(Notifications(method))
+    server.register_instance(Notifications(method, passwd=passwd))
     server.serve_forever()
 
 
@@ -284,6 +294,8 @@ if __name__ == '__main__':
     parser.add_option('-m', '--method', dest='method',
             help="Notification method, available: 'libnotify', 'dbus' [Default: %default]",
             default='libnotify')
+    parser.add_option('-P', '--passwd', dest='passwd',
+            help="Password for accept incoming notifications. [Default: %default]")
     parser.add_option('-t', '--test', dest='test', action='store_true',
             help='Send a test notification to an already running daemon and exit.',
             default=False)
@@ -292,6 +304,7 @@ if __name__ == '__main__':
     port = opts.port
     host = opts.host
     method = opts.method
+    passwd = opts.passwd
     
     if opts.test:
         daemon = xmlrpclib.Server('http://%s:%s' %(host, port))
@@ -299,6 +312,6 @@ if __name__ == '__main__':
         sys.exit(0)
 
     daemonize()
-    main(host=host, port=port, method=method)
+    main(host=host, port=port, method=method, passwd=passwd)
 
 # vim:set shiftwidth=4 tabstop=4 softtabstop=4 expandtab textwidth=100:
