@@ -17,10 +17,43 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ###
 
+"""\
+%prog [arguments ...]
+
+Notification daemon that supports libnotify or dbus for sending
+notifications. Download lastest stable from:
+http://github.com/m4v/inotify-daemon/raw/master/inotify-daemon
+
+This is intended to be used with WeeChat's inotify script, but any
+xmlrpc capable client can send notifications.
+
+It is recommended to use your desktop autorun settings for initialise
+the daemon on login, this saves you the problem of losing dbus with
+each login.
+But you can still use %prog as a detached process with screen, dtach
+or on boot with crontab, the daemon should be able to find a suitable
+dbus session if available.
+%prog *must* be always run with your user's privileges, otherwise
+it will fail to get a dbus session if it loses it.
+
+Autostart examples:
+In KDE make a symlink in $HOME/.kde/Autostart to %prog.
+With crontab, add the following line:
+@reboot <path to %prog> --host <address> --port <port>
+
+Notify methods:
+* libnotify:
+Use libnotify for notifications, needs python-notify installed.
+This is the default method.
+
+* dbus:
+Uses dbus directly for notifications, this is KDE4 specific, might
+not work in other desktops. Needs python-dbus.\
+"""
+
 __version__   = '0.1'
 __author__    = 'Elián Hanisch <lambdae2@gmail.com>'
 __copyright__ = 'Copyright (c) 2009-2010 by Elián Hanisch <lambdae2@gmail.com>'
-
 
 import xmlrpclib, socket, os, sys, subprocess, optparse
 from SimpleXMLRPCServer import SimpleXMLRPCServer
@@ -285,7 +318,7 @@ def daemonize(PIDFILE='/tmp/inotify-daemon.pid'):
 
 if __name__ == '__main__':
     # argument parsing
-    usage = 'usage: %prog [--host <hostname>] [--port <port>] [--test] [--help]'
+    usage = __doc__
     parser = optparse.OptionParser(usage=usage)
     parser.add_option('-p', '--port', dest='port', type='int', 
             help='Port to listen. [Default: %default]', default=7766)
