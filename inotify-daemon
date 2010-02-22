@@ -22,7 +22,7 @@
 
 Notification daemon that supports libnotify or dbus for sending
 notifications. Download lastest stable from:
-http://github.com/m4v/inotify-daemon/raw/master/inotify-daemon
+http://github.com/m4v/inotify-daemon/raw/stable/inotify-daemon
 
 This is intended to be used with WeeChat's inotify script, but any
 xmlrpc capable client can send notifications.
@@ -51,7 +51,7 @@ Uses dbus directly for notifications, this is KDE4 specific, might
 not work in other desktops. Needs python-dbus.\
 """
 
-__version__   = '0.1'
+__version__   = '0.2'
 __author__    = 'Elián Hanisch <lambdae2@gmail.com>'
 __copyright__ = 'Copyright (c) 2009-2010 by Elián Hanisch <lambdae2@gmail.com>'
 
