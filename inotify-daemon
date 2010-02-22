@@ -38,7 +38,7 @@ it will fail to get a dbus session if it loses it.
 
 Autostart examples:
 In KDE make a symlink in $HOME/.kde/Autostart to %prog.
-With crontab, add the following line:
+Or with crontab instead, add the following line:
 @reboot <path to %prog> --host <address> --port <port>
 
 Notify methods:
