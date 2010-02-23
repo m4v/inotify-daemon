@@ -18,37 +18,34 @@
 ###
 
 """\
-%prog [arguments ...]
+inotify-daemon [arguments ...]
 
-Notification daemon that supports libnotify or dbus for sending
-notifications. Download lastest stable from:
+Notification daemon that supports libnotify or dbus.
+Download latest stable from:
 http://github.com/m4v/inotify-daemon/raw/stable/inotify-daemon
 
 This is intended to be used with WeeChat's inotify script, but any
-xmlrpc capable client can send notifications.
+xmlrpc capable client can use it.
 
 It is recommended to use your desktop autorun settings for initialise
 the daemon on login, this saves you the problem of losing dbus with
-each login.
-But you can still use %prog as a detached process with screen, dtach
-or on boot with crontab, the daemon should be able to find a suitable
-dbus session if available.
-%prog *must* be always run with your user's privileges, otherwise
-it will fail to get a dbus session if it loses it.
+each login. Still you can use inotify-daemon as a detached process
+with screen, dtach or on boot with crontab, the daemon should be able
+to find a suitable dbus session if available.  inotify-daemon *must*
+be always run with your user's privileges, otherwise it will fail to
+get a dbus session if it loses it.
 
 Autostart examples:
-In KDE make a symlink in $HOME/.kde/Autostart to %prog.
-Or with crontab instead, add the following line:
-@reboot <path to %prog> --host <address> --port <port>
+ - In KDE make a symlink in $HOME/.kde/Autostart to inotify-daemon.
+ - With crontab, add the following line: @reboot <path to
+   inotify-daemon> --host <address> --port <port>
 
 Notify methods:
-* libnotify:
-Use libnotify for notifications, needs python-notify installed.
-This is the default method.
+ - libnotify: Use libnotify for notifications, needs python-notify
+   installed. This is the default method.
 
-* dbus:
-Uses dbus directly for notifications, this is KDE4 specific, might
-not work in other desktops. Needs python-dbus.\
+ - dbus: Uses dbus directly for notifications, this is KDE4 specific,
+   might not work in other desktops. Needs python-dbus.\
 """
 
 __version__   = '0.2'
@@ -80,7 +77,7 @@ class Daemon(SimpleXMLRPCServer):
                 self._restart_daemon()
 
     def quit(self, passwd=''):
-        """Allows to kill the server remotelly."""
+        """Allows to kill the server remotely."""
         if self.passwd and passwd != self.passwd:
             return 'Invalid password.'
         print >>sys.stderr, 'Stopping server.'
@@ -89,7 +86,7 @@ class Daemon(SimpleXMLRPCServer):
         return 'OK'
 
     def restart(self, passwd=''):
-        """Allows to restart the server remotelly."""
+        """Allows to restart the server remotely."""
         if self.passwd and passwd != self.passwd:
             return 'Invalid password.'
         print >>sys.stderr, 'Restarting server.'
@@ -149,7 +146,7 @@ class Notifications(object):
     def _updateDBUS(self, address):
         os.environ[dbus_env] = address
         global server
-        print >>sys.stderr, 'Updated dbus addres, restarting daemon...'
+        print >>sys.stderr, 'Updated dbus address, restarting daemon...'
         server.force_restart()
         return 'warning:Lost dbus, notification daemon is being restarted with new address.'
 
