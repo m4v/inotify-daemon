@@ -159,6 +159,10 @@ class Notifications(object):
 
         try:
             bus = dbus.SessionBus()
+            notify_object = bus.get_object('org.freedesktop.Notifications', '/org/freedesktop/Notifications')
+            notify = dbus.Interface(notify_object, 'org.freedesktop.Notifications')
+            notify.Notify('', 0, '', channel or 'notification', text, '', {}, self._timeout(text))
+            return 'OK'
         except:
             try:
                 address = self._getDBUSSession()
@@ -166,11 +170,6 @@ class Notifications(object):
                 print >>sys.stderr, str(e)
                 return 'Failed to connect with the dbus daemon in %s.' %host
             return self._updateDBUS(address)
-
-        notify_object = bus.get_object('org.freedesktop.Notifications', '/org/freedesktop/Notifications')
-        notify = dbus.Interface(notify_object, 'org.freedesktop.Notifications')
-        notify.Notify('', 0, '', channel or 'notification', text, '', {}, self._timeout(text))
-        return 'OK'
 
     def libnotify(self, text, channel=None):
         global host
